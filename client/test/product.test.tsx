@@ -1,6 +1,29 @@
 import { render, fireEvent } from "@testing-library/react";
 import ProductPage from "../pages/product/[id]";
 import { ProductType } from "../types";
+import { MockedProvider } from "@apollo/client/testing";
+import { BasketProvider } from "../context/BasketContext";
+import { useQuery } from "@apollo/client";
+
+jest.mock("next/router", () => ({
+  useRouter: () => ({
+    query: { id: "1" },
+  }),
+}));
+
+jest.mock("../lib/apollo", () => ({
+  __esModule: true,
+  default: {},
+}));
+
+// Mock useQuery to return the product
+jest.mock("@apollo/client", () => {
+  const actual = jest.requireActual("@apollo/client");
+  return {
+    ...actual,
+    useQuery: jest.fn(),
+  };
+});
 
 const mockProduct: ProductType = {
   id: 1,
@@ -20,13 +43,26 @@ const mockProduct: ProductType = {
   colour: "Cool daylight",
 };
 
-test("should be able to increase and decrease product quantity", async () => {
-  const { getByText, getByTitle } = render(
-    <ProductPage product={mockProduct} />
+const renderProductPage = () => {
+  (useQuery as jest.Mock).mockReturnValue({
+    data: { Product: mockProduct },
+    loading: false,
+    error: null,
+  });
+
+  return render(
+    <MockedProvider>
+      <BasketProvider>
+        <ProductPage product={mockProduct} />
+      </BasketProvider>
+    </MockedProvider>
   );
+};
+
+test("should be able to increase and decrease product quantity", () => {
+  const { getByText, getByTitle } = renderProductPage();
 
   const increaseQuantity = getByText("+");
-
   const currentQuantity = getByTitle("Current quantity");
   expect(currentQuantity).toHaveTextContent("1");
 
@@ -34,18 +70,14 @@ test("should be able to increase and decrease product quantity", async () => {
   expect(currentQuantity).toHaveTextContent("2");
 
   const decreaseQuantity = getByText("-");
-
   fireEvent.click(decreaseQuantity);
   expect(currentQuantity).toHaveTextContent("1");
 });
 
-test("should be able to add items to the basket", async () => {
-  const { getByText, getByTitle } = render(
-    <ProductPage product={mockProduct} />
-  );
+test("should be able to add items to the basket", () => {
+  const { getByText, getByTitle } = renderProductPage();
 
   const increaseQuantity = getByText("+");
-
   const currentQuantity = getByTitle("Current quantity");
 
   fireEvent.click(increaseQuantity);
@@ -62,9 +94,7 @@ test("should be able to add items to the basket", async () => {
 });
 
 test("should render the correct initial state", () => {
-  const { getByText, getByTitle, queryByTitle } = render(
-    <ProductPage product={mockProduct} />
-  );
+  const { getByText, getByTitle, queryByTitle } = renderProductPage();
 
   const currentQuantity = getByTitle("Current quantity");
   expect(currentQuantity).toHaveTextContent("1");
@@ -77,9 +107,7 @@ test("should render the correct initial state", () => {
 });
 
 test("should not decrease quantity below 1", () => {
-  const { getByText, getByTitle } = render(
-    <ProductPage product={mockProduct} />
-  );
+  const { getByText, getByTitle } = renderProductPage();
 
   const decreaseQuantityButton = getByText("-");
   fireEvent.click(decreaseQuantityButton);
@@ -89,7 +117,7 @@ test("should not decrease quantity below 1", () => {
 });
 
 test("should render all product information", () => {
-  const { getByText } = render(<ProductPage product={mockProduct} />);
+  const { getByText } = renderProductPage();
 
   expect(getByText(mockProduct.name)).toBeInTheDocument();
   expect(

@@ -1,22 +1,30 @@
 import Link from "next/link";
 import { ProductType } from "../../types";
 import { priceFormatter } from "../../utils";
+import {
+  ProductContainer,
+  ProductDescription,
+  ProductImage,
+  ProductLink,
+  ProductName,
+  ProductPrice,
+} from "./styled";
 
 export default function HomeProduct({ data }: { data: Partial<ProductType> }) {
   return (
-    <article className="product">
-      <img src={data.img_url} alt={data.name} />
-      <h2 className="product-name">
+    <ProductContainer>
+      <ProductImage src={data.img_url} alt={data.name} />
+      <ProductName>
         {data.name} - {data.power}
-      </h2>
+      </ProductName>
       <p>
         {data.brand} - {data.model_code}
       </p>
-      <p className="product-description">{data.description}</p>
-      <p className="product-price">{priceFormatter.format(data.price)}</p>
-      <Link className="product-link" href={`/product/${data.id}`}>
-        <a className="product-link" href={`/product/${data.id}`} />
+      <ProductDescription>{data.description}</ProductDescription>
+      <ProductPrice>{priceFormatter.format(data.price)}</ProductPrice>
+      <Link href={`/product/${data.id}`} passHref>
+        <ProductLink />
       </Link>
-    </article>
+    </ProductContainer>
   );
 }

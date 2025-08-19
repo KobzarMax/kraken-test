@@ -1,8 +1,13 @@
-import type { AppProps } from 'next/app'
+import type { AppProps } from "next/app";
 import "../styles/globals.css";
+import { BasketProvider } from "../context/BasketContext";
 
 function MyApp({ Component, pageProps }: AppProps) {
-  return <Component {...pageProps} />
+  return (
+    <BasketProvider>
+      <Component {...pageProps} />
+    </BasketProvider>
+  );
 }
 
 export default MyApp;
